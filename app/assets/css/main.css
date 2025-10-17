@@ -4,15 +4,27 @@
 @theme static {
   --font-sans: 'Public Sans', sans-serif;
 
-  --color-green-50: #EFFDF5;
-  --color-green-100: #D9FBE8;
-  --color-green-200: #B3F5D1;
-  --color-green-300: #75EDAE;
-  --color-green-400: #00DC82;
-  --color-green-500: #00C16A;
-  --color-green-600: #00A155;
-  --color-green-700: #007F45;
-  --color-green-800: #016538;
-  --color-green-900: #0A5331;
-  --color-green-950: #052E16;
+  --ui-color-primary-50:  #FFEEEB; /* Rosso molto chiaro */
+  --ui-color-primary-100: #FFC0B3;
+  --ui-color-primary-200: #FF917A;
+  --ui-color-primary-300: #FF6241;
+  --ui-color-primary-400: #FF3C16;
+  --ui-color-primary-500: #FF2800; /* Il Rosso Corsa principale */
+  --ui-color-primary-600: #E62400;
+  --ui-color-primary-700: #B31D00;
+  --ui-color-primary-800: #801400;
+  --ui-color-primary-900: #4D0B00; /* Rosso molto scuro */
+  --ui-color-primary-950: #330700;
+
+  --ui-color-neutral-50:  #F9F9FB;    /* Background molto chiaro */
+  --ui-color-neutral-100: #F4F4F5;
+  --ui-color-neutral-200: #E4E4E7;
+  --ui-color-neutral-300: #D4D4D8;
+  --ui-color-neutral-400: #A1A1AA;
+  --ui-color-neutral-500: #71717A;    /* Grigio medio per bordi/separatori */
+  --ui-color-neutral-600: #52525B;
+  --ui-color-neutral-700: #3F3F46;
+  --ui-color-neutral-800: #27272A;
+  --ui-color-neutral-900: #18181B;    /* Colore testo scuro principale */
+  --ui-color-neutral-950: #0C0C0D;
 }
