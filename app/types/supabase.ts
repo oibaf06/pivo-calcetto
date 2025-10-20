@@ -27,6 +27,27 @@ export interface Database {
         }
         Relationships: []
       }
+      players: {
+        Row: {
+          id: string
+          label: string
+          created_at: string
+          elo_rating: number | null
+        }
+        Insert: {
+          id?: string
+          label: string
+          created_at?: string
+          elo_rating?: number | null
+        }
+        Update: {
+          id?: string
+          label?: string
+          created_at?: string
+          elo_rating?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

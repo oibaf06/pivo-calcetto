@@ -39,8 +39,8 @@ async function fetchLeaderboard() {
   loadingLeaderboard.value = true
   const { data, error } = await supabase
     .from('leaderboard')
-    .select('*, player(label, elo_rating)')
-    .order('player.elo_rating', { ascending: true })
+    .select('*, player(id, label, elo_rating)')
+    .order('elo_rating', { foreignTable: 'player', ascending: true })
 
   if (error)
     console.error(error)
@@ -49,6 +49,11 @@ async function fetchLeaderboard() {
   leaderboard.value = data?.map((item, index) => ({
     ...item,
     position: index + 1,
+    player: {
+      id: item.player?.id,
+      label: item.player?.label ?? 'Giocatore sconosciuto',
+      elo_rating: item.player?.elo_rating ?? 0
+    }
   }))
 }
 
@@ -70,7 +75,8 @@ onMounted(async () => {
         <span class="text-xl">Inizia<br/>Partita</span>
       </UButton>
     </div>
-    <UTable ref="table" :data="leaderboard" :columns="leaderboardColumns" :loading="loadingLeaderboard" >
+    <USeparator class="my-4"/>
+    <UTable ref="table" :data="leaderboard" :columns="leaderboardColumns" :loading="loadingLeaderboard" @select="(row) => router.push(`/player/${row.original.player.id}`)">
       <template #empty >
         <div class="flex flex-col justify-center items-center gap-2">
           <span>Non c'è nessun giocatore, aggiungilo</span>
@@ -78,6 +84,12 @@ onMounted(async () => {
         </div>
       </template>
     </UTable>
-    
+    <USeparator class="my-4"/>
+    <div class="w-full grid grid-cols-2 h-40 gap-2">
+      <UButton @click="router.push('/player/new')">
+        <UIcon name="i-game-icons-soccer-kick" class="text-7xl"/>
+        <span class="text-xl">Aggiungi Giocatore</span>
+      </UButton>
+    </div>    
   </div>
 </template>
