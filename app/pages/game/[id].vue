@@ -1,5 +1,5 @@
 <script setup>
-
+const { calculateElo } = useElo()
 // Assuming these are available via Nuxt auto-imports or context-specific composables
 const supabase = useSupabaseClient()
 const route = useRoute() // Access to route parameters
@@ -90,6 +90,74 @@ onUnmounted(() => {
     supabase.removeChannel(gameChannel)
   }
 })
+
+const removeHomeGoal = async () => {
+  if (!game.value) return
+  const { error } = await supabase
+    .from('matches')
+    .update({ home_score: game.value.home_score - 1 })
+    .eq('id', gameId)
+  if (error) console.error('Error updating home score:', error)
+}
+
+const removeAwayGoal = async () => {
+  if (!game.value) return
+  const { error } = await supabase
+    .from('matches')
+    .update({ away_score: game.value.away_score - 1 })
+    .eq('id', gameId)
+  if (error) console.error('Error updating away score:', error)
+}
+
+const homeGoal = async () => {
+  if (!game.value) return
+  const { error } = await supabase
+    .from('matches')
+    .update({ home_score: game.value.home_score + 1 })
+    .eq('id', gameId)
+  if (error) console.error('Error updating home score:', error)
+}
+
+const awayGoal = async () => {
+  if (!game.value) return
+  const { error } = await supabase
+    .from('matches')
+    .update({ away_score: game.value.away_score + 1 })
+    .eq('id', gameId)
+  if (error) console.error('Error updating away score:', error)
+}
+
+const router = useRouter()
+const stopGame = async () => {
+  if (!game.value) return
+
+  const homeRating = homePlayer.value.elo_rating
+  const awayRating = awayPlayer.value.elo_rating
+  const homeScore = game.value.home_score > game.value.away_score ? 1 : 0
+  const awayScore = game.value.away_score > game.value.home_score ? 1 : 0
+
+  const newHomeRating = calculateElo(homeRating, awayRating, homeScore)
+  const newAwayRating = calculateElo(awayRating, homeRating, awayScore)
+
+  await supabase.from('players').update({ elo_rating: newHomeRating }).eq('id', homePlayer.value.id)
+  await supabase.from('players').update({ elo_rating: newAwayRating }).eq('id', awayPlayer.value.id)
+
+  const { error } = await supabase
+    .from('matches')
+    .update({ status: 'finished' })
+    .eq('id', gameId)
+  if (error) console.error('Error stopping game:', error)
+  router.push('/')
+}
+
+const resumeGame = async () => {
+  if (!game.value) return
+  const { error } = await supabase
+    .from('matches')
+    .update({ status: 'ongoing' })
+    .eq('id', gameId)
+  if (error) console.error('Error resuming game:', error)
+}
 </script>
 
 <template>
@@ -116,7 +184,27 @@ onUnmounted(() => {
       <p class="text-3xl font-extrabold">{{ game.status.toUpperCase() === 'ONGOING' ? 'In corso' : 'Finita' }}</p>
       <p class="text-3xl font-extrabold">{{ `${game.home_score} - ${game.away_score}` }}</p>
       
-      <UButton ></UButton>
+      <div class="grid grid-cols-2 gap-2 h-40" v-if="game.status === 'ongoing'">
+        <UButton @click="homeGoal">
+          {{ `Goal ${homePlayer.label}` }}
+        </UButton>
+        <UButton @click="awayGoal">
+          {{ `Goal ${awayPlayer.label}` }}
+        </UButton>
+        <UButton @click="removeHomeGoal">
+          {{ `Rimuovi Goal ${homePlayer.label}` }}
+        </UButton>
+        <UButton @click="removeAwayGoal">
+          {{ `Rimuovi Goal ${awayPlayer.label}` }}
+        </UButton>
+      </div>
+      <UButton v-if="game.status === 'ongoing'" @click="stopGame()" class="w-full">
+        Fine partita
+      </UButton>
+      <UButton v-else @click="resumeGame" class="w-full">
+        Riprendi partita
+      </UButton>
+
     </div>
     
     <div v-else class="text-center py-8">
