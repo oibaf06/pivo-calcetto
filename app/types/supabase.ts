@@ -48,6 +48,49 @@ export interface Database {
         }
         Relationships: []
       }
+      matches: {
+        Row: {
+          id: string
+          created_at: string
+          home_player: string | null
+          away_player: string | null
+          home_score: number | null
+          away_score: number | null
+          status: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          home_player?: string | null
+          away_player?: string | null
+          home_score?: number | null
+          away_score?: number | null
+          status: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          home_player?: string | null
+          away_player?: string | null
+          home_score?: number | null
+          away_score?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_away_player_fkey"
+            columns: ["away_player"]
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_home_player_fkey"
+            columns: ["home_player"]
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

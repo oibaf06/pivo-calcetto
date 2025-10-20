@@ -12,6 +12,15 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  icon: {
+    customCollections: [
+      {
+        prefix: 'custom',
+        dir: './app/assets/icons'
+      }
+    ]
+  },
+
   css: ['~/assets/css/main.css'],
 
   routeRules: {

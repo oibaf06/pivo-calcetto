@@ -20,19 +20,6 @@ const leaderboardColumns = [
   },
 ]
 
-async function startGame() {
-  const { data, error } = await supabase
-    .from('games')
-    .insert({ status: 'ongoing' })
-    .select('id')
-    .single()
-  if (error)
-    console.error(error)
-
-  router.push(`/game/${data?.id}`)
-  
-}
-
 const leaderboard = ref([])
 const loadingLeaderboard = ref(false)
 async function fetchLeaderboard() {
@@ -70,7 +57,7 @@ onMounted(async () => {
         <UIcon name="i-material-symbols-add" class="text-7xl"/>
         <span class="text-xl">Aggiungi<br/>Partita</span>
       </UButton>
-      <UButton @click="startGame()">
+      <UButton @click="router.push(`/game/start`)">
         <UIcon name="i-material-symbols-play-arrow-outline-rounded" class="text-7xl"/>
         <span class="text-xl">Inizia<br/>Partita</span>
       </UButton>
