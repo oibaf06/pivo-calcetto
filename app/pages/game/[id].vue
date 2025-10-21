@@ -12,8 +12,8 @@ const game = ref(null)
 const loading = ref(true)
 // Variable to hold the Supabase real-time channel instance
 let gameChannel = null
-const homePlayer = ref({ id: '', label: '' })
-const awayPlayer = ref({ id: '', label: '' })
+const homePlayers = ref([])
+const awayPlayers = ref([])
 /**
  * Fetches the initial game data and sets up the real-time subscription.
  */
@@ -28,7 +28,7 @@ const setupRealtimeSubscription = () => {
   const fetchGameData = async () => {
     const { data, error } = await supabase
       .from('matches')
-      .select('*, home_player(id, label, elo_rating), away_player(id, label, elo_rating)')
+      .select('*, match_players(*, players(*))')
       .eq('id', gameId)
       .single()
 
@@ -37,9 +37,8 @@ const setupRealtimeSubscription = () => {
       game.value = null
     } else {
       game.value = data
-      homePlayer.value = data.home_player
-      awayPlayer.value = data.away_player
-
+      homePlayers.value = data.match_players.filter(p => p.team === 'home').map(p => p.players)
+      awayPlayers.value = data.match_players.filter(p => p.team === 'away').map(p => p.players)
     }
     loading.value = false
   }
@@ -131,16 +130,23 @@ const router = useRouter()
 const stopGame = async () => {
   if (!game.value) return
 
-  const homeRating = homePlayer.value.elo_rating
-  const awayRating = awayPlayer.value.elo_rating
   const homeScore = game.value.home_score > game.value.away_score ? 1 : 0
-  const awayScore = game.value.away_score > game.value.home_score ? 1 : 0
 
-  const newHomeRating = calculateElo(homeRating, awayRating, homeScore)
-  const newAwayRating = calculateElo(awayRating, homeRating, awayScore)
+  const { teamA: newHomePlayers, teamB: newAwayPlayers } = calculateElo(
+    homePlayers.value.map(p => ({ elo: p.elo_rating })),
+    awayPlayers.value.map(p => ({ elo: p.elo_rating })),
+    homeScore,
+  )
 
-  await supabase.from('players').update({ elo_rating: newHomeRating }).eq('id', homePlayer.value.id)
-  await supabase.from('players').update({ elo_rating: newAwayRating }).eq('id', awayPlayer.value.id)
+  for (const player of newHomePlayers) {
+    const oldPlayer = homePlayers.value.find(p => p.elo_rating === player.oldElo)
+    await supabase.from('players').update({ elo_rating: player.elo }).eq('id', oldPlayer.id)
+  }
+
+  for (const player of newAwayPlayers) {
+    const oldPlayer = awayPlayers.value.find(p => p.elo_rating === player.oldElo)
+    await supabase.from('players').update({ elo_rating: player.elo }).eq('id', oldPlayer.id)
+  }
 
   const { error } = await supabase
     .from('matches')
@@ -163,14 +169,18 @@ const resumeGame = async () => {
 <template>
   <div class="p-2">
     <div class="flex w-full h-40 items-center">
-      <div class="flex justify-center items-center flex-1">
-        <span class="text-xl">{{ homePlayer.label }}</span>
-        <span class="text-xs ml-2">{{ homePlayer.elo_rating }}</span>
+      <div class="flex flex-col justify-center items-center flex-1">
+        <div v-for="player in homePlayers" :key="player.id" class="flex items-center">
+          <span class="text-xl">{{ player.label }}</span>
+          <span class="text-xs ml-2">{{ player.elo_rating }}</span>
+        </div>
       </div>
       <UIcon name="i-custom-versus" class="size-40" />
-      <div class="flex justify-center items-center flex-1">
-        <span class="text-xl">{{ awayPlayer.label }}</span>
-        <span class="text-xs ml-2">{{ awayPlayer.elo_rating }}</span>
+      <div class="flex flex-col justify-center items-center flex-1">
+        <div v-for="player in awayPlayers" :key="player.id" class="flex items-center">
+          <span class="text-xl">{{ player.label }}</span>
+          <span class="text-xs ml-2">{{ player.elo_rating }}</span>
+        </div>
       </div>
     </div>
     
@@ -186,16 +196,16 @@ const resumeGame = async () => {
       
       <div class="grid grid-cols-2 gap-2 h-40" v-if="game.status === 'ongoing'">
         <UButton @click="homeGoal">
-          {{ `Goal ${homePlayer.label}` }}
+          Goal In casa
         </UButton>
         <UButton @click="awayGoal">
-          {{ `Goal ${awayPlayer.label}` }}
+          Goal Ospite
         </UButton>
         <UButton @click="removeHomeGoal">
-          {{ `Rimuovi Goal ${homePlayer.label}` }}
+          Rimuovi Goal In casa
         </UButton>
         <UButton @click="removeAwayGoal">
-          {{ `Rimuovi Goal ${awayPlayer.label}` }}
+          Rimuovi Goal Ospite
         </UButton>
       </div>
       <UButton v-if="game.status === 'ongoing'" @click="stopGame()" class="w-full">

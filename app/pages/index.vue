@@ -46,6 +46,30 @@ async function fetchLeaderboard() {
 
 const matchesColumns = [
   {
+    id: 'score',
+    accessorKey: 'score',
+    header: 'risultato',
+    cell: ({ row }) => {
+      return `${row.original.home_score} - ${row.original.away_score}`
+    }
+  },
+  {
+    id: 'home_players',
+    header: 'In casa',
+    cell: ({ row }) => {
+      const players = row.original.match_players.filter(p => p.team === 'home').map(p => p.players.label)
+      return players.join(', ')
+    }
+  },
+  {
+    id: 'away_players',
+    header: 'Ospite',
+    cell: ({ row }) => {
+      const players = row.original.match_players.filter(p => p.team === 'away').map(p => p.players.label)
+      return players.join(', ')
+    }
+  },
+  {
     id: 'created_at',
     accessorKey: 'created_at',
     header: 'Data',
@@ -53,24 +77,6 @@ const matchesColumns = [
       return new Date(row.original.created_at).toLocaleDateString()
     }
   },
-  {
-    id: 'home_player.label',
-    accessorKey: 'home_player.label',
-    header: 'In casa'
-  },
-  {
-    id: 'away_player.label',
-    accessorKey: 'away_player.label',
-    header: 'Ospite'
-  },
-  {
-    id: 'score',
-    accessorKey: 'score',
-    header: 'risultato',
-    cell: ({ row }) => {
-      return `${row.original.home_score} - ${row.original.away_score}`
-    }
-  }
 ]
 
 const matches = ref([])
@@ -79,29 +85,14 @@ async function fetchMatches() {
   loadingMatches.value = true
   const { data, error } = await supabase
     .from('matches')
-    .select('*, home_player(id, label, elo_rating), away_player(id, label, elo_rating)')
+    .select('*, match_players(*, players(*))')
     .order('created_at', { ascending: false })
 
   if (error)
     console.error(error)
 
   loadingMatches.value = false
-  matches.value = data?.map((item, index) => ({
-    ...item,
-    home_player: {
-      id: item.home_player?.id,
-      label: item.home_player?.label ?? 'Giocatore sconosciuto',
-      elo_rating: item.home_player?.elo_rating ?? 0
-    },
-    away_player: {
-      id: item.away_player?.id,
-      label: item.away_player?.label ?? 'Giocatore sconosciuto',
-      elo_rating: item.away_player?.elo_rating ?? 0
-    },
-    status: item.status ?? 'Sconosciuto',
-    home_score: item.home_score ?? 0,
-    away_score: item.away_score ?? 0
-  }))
+  matches.value = data
 }
 
 onMounted(async () => {
