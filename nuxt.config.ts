@@ -5,7 +5,8 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@nuxt/image',
     '@nuxt/scripts',
-    '@nuxtjs/supabase'
+    '@nuxtjs/supabase',
+    '@nuxthub/core'
   ],
 
   devtools: {
